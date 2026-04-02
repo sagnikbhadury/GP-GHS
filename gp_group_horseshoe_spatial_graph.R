@@ -27,18 +27,6 @@ library(MASS)
 ##    nu       : smoothness (0.5, 1.5, 2.5)
 ##    rho      : length-scale
 ##    alpha    : marginal std dev (signal amplitude)
-## ----------------------------------------------------------------
-matern_spectral_density <- function(omega_sq, nu = 1.5, rho = 1, alpha = 1) {
-  d <- 2  # 2D spatial domain
-  # S(omega) = alpha^2 * C(nu,d,rho) * (2nu/rho^2 + ||omega||^2)^{-(nu + d/2)}
-  C_num <- (2^d) * (pi^(d/2)) * gamma(nu + d/2) * (2 * nu)^nu
-  C_den <- gamma(nu) * rho^(2 * nu)
-  C     <- C_num / C_den
-  alpha^2 * C * (2 * nu / rho^2 + omega_sq)^(-(nu + d/2))
-}
-
-
-## ----------------------------------------------------------------
 ## 2. Build HSGP Basis + Spectral Weights
 ##    coords  : n x 2 spatial coordinates
 ##    m       : basis functions per dimension (m^2 total in 2D)
@@ -83,7 +71,6 @@ build_hsgp_basis <- function(coords, m = 5, nu = 1.5,
   phi_x <- phi_1d(coords_norm[, 1], m)   # n x m
   phi_y <- phi_1d(coords_norm[, 2], m)   # n x m
   lam_x <- lambda_1d(m)                  # m eigenvalues (x)
-  lam_y <- lambda_1d(m)                  # m eigenvalues (y)
   
   # 2D tensor product: phi_{ij}(l) = phi_i(x) * phi_j(y)
   # omega^2_{ij} = lambda_i + lambda_j  (2D Laplacian eigenvalue)
