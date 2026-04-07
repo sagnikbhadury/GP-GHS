@@ -21,12 +21,7 @@
 
 rm(list = ls())
 library(MASS)
-## ----------------------------------------------------------------
-## 1. Matern Spectral Density (2D)
-##    omega_sq : squared frequency ||omega||^2
-##    nu       : smoothness (0.5, 1.5, 2.5)
-##    rho      : length-scale
-##    alpha    : marginal std dev (signal amplitude)
+
 ## 2. Build HSGP Basis + Spectral Weights
 ##    coords  : n x 2 spatial coordinates
 ##    m       : basis functions per dimension (m^2 total in 2D)
@@ -187,12 +182,11 @@ gp_group_horseshoe_sampler <- function(y, X_s, phi, S_diag,
       error = function(e) solve(A + diag(1e-8, P), tol = 1e-60)
     )
     theta_mu <- A_inv %*% Zty / sigma_sq
-    theta    <- as.vector(mvrnorm(1, mu = theta_mu, Sigma = A_inv))
+    theta    <- as.vector(mvrnorm(10, mu = theta_mu, Sigma = A_inv))
     
     ## ----------------------------------------------------------
     ## 2. Update lambda_sq[j] | theta, tau
-    ##    CORRECTED: sigma_sq removed from rate.
-    ##    FC: lambda_j^{-2} ~ Gamma((m2+1)/2,  1/nu_j + ||theta_j||^2_{S^{-1}} / (2*tau^2))
+     ##    FC: lambda_j^{-2} ~ Gamma((m2+1)/2,  1/nu_j + ||theta_j||^2_{S^{-1}} / (2*tau^2))
     ##    where ||theta_j||^2_{S^{-1}} = sum_k theta_{j,k}^2 / S_diag[k]
     ## ----------------------------------------------------------
     for (j in 1:q) {
@@ -218,14 +212,11 @@ gp_group_horseshoe_sampler <- function(y, X_s, phi, S_diag,
     xi <- 1 / rgamma(1, 1, rate = 1 + 1 / tau_sq)
     
     
-    # CORRECTED rate: no sigma_sq
     s_tau  <- 1 / xi + global_norm / 2
     tau_sq <- 1 / rgamma(1, (P + 1) / 2, rate = s_tau)
     
     ## ----------------------------------------------------------
     ## 4. Update sigma_sq | y, theta
-    ##    CORRECTED: theta prior has no sigma_sq, so only likelihood
-    ##    and hyperprior (sparseIG: shape=0.1, rate=0.1) contribute.
     ##    FC: sigma^{-2} ~ Gamma((n+0.2)/2,  (||y - Z*theta||^2 + 0.2) / 2)
     ## ----------------------------------------------------------
     resid    <- y - Z %*% theta
